@@ -71,6 +71,35 @@ export const LLAMA_CANDIDATE_MODELS = [
 ] as const;
 
 /**
+ * Sanitize any refusal response to ensure the model never outputs tailored refusals
+ * like "I don't have information about [X]" or "This policy does not mention [X]".
+ */
+export function sanitizeRefusal(text: string): string {
+  const trimmed = text.trim();
+  const lower = trimmed.toLowerCase();
+  if (
+    lower.startsWith("i don't have information") ||
+    lower.startsWith("i do not have information") ||
+    lower.startsWith("this policy does not") ||
+    lower.startsWith("the policy does not") ||
+    lower.startsWith("the provided policy does not") ||
+    lower.startsWith("i cannot provide information") ||
+    lower.startsWith("i do not have access") ||
+    lower.startsWith("i don't have access") ||
+    lower.startsWith("i do not know your") ||
+    lower.startsWith("i don't know your") ||
+    lower.startsWith("as an ai") ||
+    lower.includes("information about your position") ||
+    lower.includes('does not mention "position"') ||
+    lower.includes("does not mention 'position'") ||
+    lower.includes("does not mention position")
+  ) {
+    return "I don't know, please contact HR.";
+  }
+  return trimmed;
+}
+
+/**
  * Execute Llama 3 model inference with automatic fallback across active Workers AI models.
  */
 async function runLlamaInference(
@@ -84,7 +113,9 @@ async function runLlamaInference(
       const result = (await env.AI.run(
         model as Parameters<typeof env.AI.run>[0],
         {
-          messages
+          messages,
+          temperature: 0.1,
+          max_tokens: 512
         }
       )) as { response?: string };
 
@@ -93,7 +124,7 @@ async function runLlamaInference(
         typeof result.response === "string" &&
         result.response.trim().length > 0
       ) {
-        return result.response;
+        return sanitizeRefusal(result.response);
       }
     } catch (err) {
       console.warn(`Llama model ${model} failed, trying alternative:`, err);
@@ -159,10 +190,76 @@ export class ChatAgent extends AIChatAgent<Env> {
               }),
               system: HR_SYSTEM_PROMPT,
               messages: modelMessages,
+              temperature: 0.1,
+              maxOutputTokens: 512,
               abortSignal: options?.abortSignal
             });
 
-            writer.merge(result.toUIMessageStream());
+            let buffer = "";
+            let hasFlushed = false;
+            let isIntercepted = false;
+
+            for await (const chunk of result.textStream) {
+              if (isIntercepted) continue;
+              buffer += chunk;
+
+              if (!hasFlushed) {
+                // Buffer first 25 characters to catch any tailored refusal prefix
+                if (buffer.length < 25) {
+                  continue;
+                }
+
+                const lower = buffer.toLowerCase();
+                if (
+                  lower.startsWith("i don't have information") ||
+                  lower.startsWith("i do not have information") ||
+                  lower.startsWith("this policy does not") ||
+                  lower.startsWith("the policy does not") ||
+                  lower.startsWith("the provided policy does not") ||
+                  lower.startsWith("i cannot provide information") ||
+                  lower.startsWith("i do not have access") ||
+                  lower.startsWith("i don't have access") ||
+                  lower.startsWith("i do not know your") ||
+                  lower.startsWith("i don't know your") ||
+                  lower.startsWith("as an ai") ||
+                  lower.includes("information about your position") ||
+                  lower.includes("does not mention position")
+                ) {
+                  isIntercepted = true;
+                  writer.write({
+                    type: "text-delta",
+                    id: "intercepted-fallback",
+                    delta: "I don't know, please contact HR."
+                  });
+                  break;
+                }
+
+                // Normal response - flush the buffer and continue streaming
+                writer.write({
+                  type: "text-delta",
+                  id: "chunk-start",
+                  delta: buffer
+                });
+                hasFlushed = true;
+                continue;
+              }
+
+              writer.write({
+                type: "text-delta",
+                id: "chunk-stream",
+                delta: chunk
+              });
+            }
+
+            // If the stream finished with fewer than 25 characters
+            if (!hasFlushed && !isIntercepted) {
+              const sanitized = sanitizeRefusal(buffer);
+              writer.write({
+                type: "text-delta",
+                id: "chunk-end",
+                delta: sanitized
+              });
+            }
           } catch (streamErr) {
             console.warn(
               "streamText failed to initialize, falling back to direct Workers AI run:",
@@ -181,7 +278,7 @@ export class ChatAgent extends AIChatAgent<Env> {
               writer.write({
                 type: "text-delta",
                 id: "fallback-text-1",
-                delta: reply
+                delta: sanitizeRefusal(reply)
               });
             } catch (fallbackErr) {
               console.error("Direct fallback also failed:", fallbackErr);
