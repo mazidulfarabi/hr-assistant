@@ -15,12 +15,12 @@ import {
 } from "@phosphor-icons/react";
 
 const SUGGESTED_QUESTIONS = [
+  "What are the weekly holidays at XYZ Company?",
   "How many days of Annual Leave am I entitled to each year?",
   "What is the procedure and notice required for Sick Leave?",
   "How many unused leave days can I carry forward to next year?",
   "Can employees on probation take Casual Leave or Annual Leave?",
-  "What is the policy for Maternity and Paternity Leave?",
-  "What are the weekly holidays at XYZ Company?"
+  "What is the policy for Maternity and Paternity Leave?"
 ];
 
 function PolicyModal({
@@ -47,7 +47,7 @@ function PolicyModal({
           </div>
           <button
             onClick={onClose}
-            className="text-blue-200 hover:text-white p-1 rounded-lg hover:bg-white/10 transition-colors"
+            className="text-blue-200 hover:text-white p-1 rounded-lg hover:bg-white/10 transition-colors cursor-pointer"
             aria-label="Close modal"
           >
             ✕
@@ -105,7 +105,7 @@ function PolicyModal({
             </li>
             <li>
               <strong>Strict Fallback:</strong> Out-of-scope inquiries return:{" "}
-              <em>"I don't know, please contact HR."</em>
+              <em>&quot;I don&apos;t know, please contact HR.&quot;</em>
             </li>
             <li>
               <strong>Data Privacy:</strong> Queries regarding other employee
@@ -117,7 +117,7 @@ function PolicyModal({
         <div className="bg-slate-50 px-6 py-3 border-t border-slate-200 flex justify-end">
           <button
             onClick={onClose}
-            className="px-4 py-2 bg-blue-900 text-white rounded-xl text-sm font-medium hover:bg-blue-800 transition-colors"
+            className="px-4 py-2 bg-blue-900 text-white rounded-xl text-sm font-medium hover:bg-blue-800 transition-colors cursor-pointer"
           >
             Close
           </button>
@@ -192,6 +192,10 @@ function ChatContent() {
     }
   };
 
+  // Determine if the last message in history is currently an assistant turn
+  const hasAssistantTurn =
+    messages.length > 0 && messages[messages.length - 1].role === "assistant";
+
   return (
     <div className="flex flex-col h-screen w-screen bg-slate-100 text-slate-800 font-sans overflow-hidden">
       {/* Policy Modal */}
@@ -211,7 +215,6 @@ function ChatContent() {
                 alt="XYZ Company Logo"
                 className="h-8 sm:h-9 w-auto object-contain"
                 onError={(e) => {
-                  // Fallback in case of image load delay
                   (e.target as HTMLElement).style.display = "none";
                 }}
               />
@@ -258,7 +261,7 @@ function ChatContent() {
             {/* Policy Info Button */}
             <button
               onClick={() => setIsPolicyModalOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium bg-blue-800/80 hover:bg-blue-700/80 text-blue-100 border border-blue-700/60 transition-colors shadow-xs"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium bg-blue-800/80 hover:bg-blue-700/80 text-blue-100 border border-blue-700/60 transition-colors shadow-xs cursor-pointer"
               title="View Policy Summary"
             >
               <InfoIcon size={15} />
@@ -276,7 +279,7 @@ function ChatContent() {
                   clearHistory();
                 }
               }}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium bg-blue-800/80 hover:bg-rose-900/80 text-blue-100 hover:text-white border border-blue-700/60 hover:border-rose-700/60 transition-colors shadow-xs"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium bg-blue-800/80 hover:bg-rose-900/80 text-blue-100 hover:text-white border border-blue-700/60 hover:border-rose-700/60 transition-colors shadow-xs cursor-pointer"
               title="Clear conversation history"
               disabled={messages.length === 0}
             >
@@ -289,7 +292,7 @@ function ChatContent() {
 
       {/* STEP 5: Scrollable Message History Area */}
       <main className="flex-1 overflow-y-auto px-4 py-6 md:px-6">
-        <div className="max-w-4xl mx-auto space-y-5">
+        <div className="max-w-4xl mx-auto space-y-4">
           {/* Welcome Screen / Empty State */}
           {messages.length === 0 && (
             <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-slate-200/90 text-center my-4 space-y-6">
@@ -323,7 +326,7 @@ function ChatContent() {
                     <button
                       key={idx}
                       onClick={() => handleSend(question)}
-                      className="p-3 text-xs sm:text-sm font-medium text-slate-700 bg-slate-50 hover:bg-teal-50/80 hover:text-teal-900 border border-slate-200 hover:border-teal-300 rounded-xl transition-all duration-150 flex items-start gap-2 shadow-2xs group"
+                      className="p-3 text-xs sm:text-sm font-medium text-slate-700 bg-slate-50 hover:bg-teal-50/80 hover:text-teal-900 border border-slate-200 hover:border-teal-300 rounded-xl transition-all duration-150 flex items-start gap-2 shadow-2xs group cursor-pointer"
                     >
                       <SparkleIcon
                         size={16}
@@ -357,73 +360,95 @@ function ChatContent() {
             const isUser = message.role === "user";
             const isLastAssistant = !isUser && msgIdx === messages.length - 1;
 
+            // Extract all text content from parts
+            const textContent = message.parts
+              .filter((p) => p.type === "text")
+              .map((p) => (p as { text: string }).text || "")
+              .join("");
+
+            // If it's an assistant message without text and not currently waiting, skip ghost renders
+            if (!isUser && !textContent.trim() && !isWaiting) {
+              return null;
+            }
+
+            if (isUser) {
+              return (
+                <div
+                  key={message.id || msgIdx}
+                  className="flex justify-end items-end gap-2.5 my-1"
+                >
+                  <div className="bg-slate-200 text-slate-900 border border-slate-300/80 rounded-2xl rounded-br-xs px-4 py-3 max-w-[85%] sm:max-w-[75%] shadow-xs">
+                    <p className="text-sm leading-relaxed whitespace-pre-wrap">
+                      {textContent}
+                    </p>
+                  </div>
+                  <div className="flex-none w-7 h-7 rounded-full bg-blue-900 text-white flex items-center justify-center font-bold text-[10px] shadow-xs">
+                    You
+                  </div>
+                </div>
+              );
+            }
+
+            // Assistant Message Bubble
             return (
               <div
                 key={message.id || msgIdx}
-                className={`flex gap-3 items-start ${isUser ? "justify-end" : "justify-start"}`}
+                className="flex justify-start items-start gap-2.5 my-2"
               >
-                {/* Assistant Avatar */}
-                {!isUser && (
-                  <div className="flex-none w-8 h-8 rounded-full bg-teal-700 text-white flex items-center justify-center font-bold text-xs shadow-xs mt-1">
-                    HR
-                  </div>
-                )}
-
-                {/* Message Bubble */}
-                <div
-                  className={`relative px-4 py-3.5 rounded-2xl shadow-xs transition-all ${
-                    isUser
-                      ? "bg-slate-200/90 text-slate-800 border border-slate-300/80 rounded-tr-xs max-w-[85%] sm:max-w-[75%]"
-                      : "bg-teal-50/90 text-slate-800 border border-teal-200 rounded-tl-xs max-w-[90%] sm:max-w-[80%]"
-                  }`}
-                >
-                  {/* Sender identity & timestamp */}
-                  <div className="flex items-center justify-between gap-4 mb-1.5 pb-1 border-b border-black/5">
-                    <span className="text-[11px] font-semibold tracking-wide text-slate-500">
-                      {isUser ? "You" : "XYZ HR Assistant"}
-                    </span>
-                    {!isUser && (
-                      <span className="text-[10px] text-teal-800/80 font-medium bg-teal-100/70 px-1.5 py-0.5 rounded">
-                        HR-POL-004
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Message Content */}
-                  <div className="text-sm leading-relaxed space-y-2">
-                    {message.parts.map((part, pIdx) => {
-                      if (part.type === "text") {
-                        return (
-                          <Streamdown
-                            key={pIdx}
-                            className="prose prose-sm max-w-none text-slate-800 prose-p:my-1 prose-headings:my-2 prose-ul:my-1"
-                            plugins={{ code }}
-                            controls={false}
-                            isAnimating={isLastAssistant && isStreaming}
-                          >
-                            {part.text}
-                          </Streamdown>
-                        );
-                      }
-                      return null;
-                    })}
-                  </div>
+                <div className="flex-none w-8 h-8 rounded-full bg-teal-700 text-white flex items-center justify-center font-bold text-xs shadow-xs mt-0.5">
+                  HR
                 </div>
 
-                {/* User Avatar */}
-                {isUser && (
-                  <div className="flex-none w-8 h-8 rounded-full bg-blue-900 text-white flex items-center justify-center font-semibold text-xs shadow-xs mt-1">
-                    You
+                <div className="bg-teal-50/90 text-slate-800 border border-teal-200 rounded-2xl rounded-tl-xs px-4 py-3.5 shadow-xs max-w-[90%] sm:max-w-[80%]">
+                  {/* Assistant Header */}
+                  <div className="flex items-center gap-2 mb-2 pb-1 border-b border-teal-200/50">
+                    <span className="text-xs font-bold text-teal-950">
+                      XYZ HR Assistant
+                    </span>
+                    <span className="text-[10px] text-teal-800 font-semibold bg-teal-200/60 px-1.5 py-0.5 rounded">
+                      HR-POL-004
+                    </span>
                   </div>
-                )}
+
+                  {/* Assistant Body */}
+                  {textContent.trim().length > 0 ? (
+                    <Streamdown
+                      className="prose prose-sm max-w-none text-slate-800 prose-p:my-1.5 prose-headings:my-2 prose-ul:my-1 text-sm leading-relaxed"
+                      plugins={{ code }}
+                      controls={false}
+                      isAnimating={isLastAssistant && isStreaming}
+                    >
+                      {textContent}
+                    </Streamdown>
+                  ) : (
+                    /* Pulsing typing indicator inside the bubble while awaiting first tokens */
+                    <div className="flex items-center gap-2 text-teal-800 text-xs font-medium py-1">
+                      <div className="flex gap-1 items-center">
+                        <span
+                          className="w-2 h-2 rounded-full bg-teal-600 animate-bounce"
+                          style={{ animationDelay: "0ms" }}
+                        />
+                        <span
+                          className="w-2 h-2 rounded-full bg-teal-600 animate-bounce"
+                          style={{ animationDelay: "150ms" }}
+                        />
+                        <span
+                          className="w-2 h-2 rounded-full bg-teal-600 animate-bounce"
+                          style={{ animationDelay: "300ms" }}
+                        />
+                      </div>
+                      <span>Consulting leave policy...</span>
+                    </div>
+                  )}
+                </div>
               </div>
             );
           })}
 
-          {/* STEP 5: Visual Loading State */}
-          {isWaiting && (
-            <div className="flex gap-3 items-start justify-start animate-fade-in">
-              <div className="flex-none w-8 h-8 rounded-full bg-teal-700 text-white flex items-center justify-center font-bold text-xs shadow-xs mt-1">
+          {/* Fallback loading indicator if turn just began and assistant message object is not yet instantiated */}
+          {isWaiting && !hasAssistantTurn && (
+            <div className="flex justify-start items-start gap-2.5 my-2">
+              <div className="flex-none w-8 h-8 rounded-full bg-teal-700 text-white flex items-center justify-center font-bold text-xs shadow-xs mt-0.5">
                 HR
               </div>
               <div className="bg-teal-50/90 border border-teal-200 rounded-2xl rounded-tl-xs px-4 py-3 shadow-xs">
@@ -442,7 +467,7 @@ function ChatContent() {
                       style={{ animationDelay: "300ms" }}
                     />
                   </div>
-                  <span>HR Assistant is consulting policy...</span>
+                  <span>Consulting leave policy...</span>
                 </div>
               </div>
             </div>
@@ -477,7 +502,7 @@ function ChatContent() {
               <button
                 type="button"
                 onClick={stop}
-                className="flex-none p-2.5 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-700 transition-colors shadow-xs"
+                className="flex-none p-2.5 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-700 transition-colors shadow-xs cursor-pointer"
                 title="Stop generation"
                 aria-label="Stop generation"
               >
@@ -487,7 +512,7 @@ function ChatContent() {
               <button
                 type="submit"
                 disabled={!input.trim() || !connected}
-                className="flex-none p-2.5 rounded-xl bg-blue-900 hover:bg-blue-800 active:bg-blue-950 text-white transition-colors shadow-xs disabled:opacity-40 disabled:cursor-not-allowed"
+                className="flex-none p-2.5 rounded-xl bg-blue-900 hover:bg-blue-800 active:bg-blue-950 text-white transition-colors shadow-xs disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
                 title="Send message"
                 aria-label="Send message"
               >

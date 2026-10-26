@@ -1,7 +1,12 @@
 import { createWorkersAI } from "workers-ai-provider";
 import { callable, routeAgentRequest } from "agents";
 import { AIChatAgent, type OnChatMessageOptions } from "@cloudflare/ai-chat";
-import { convertToModelMessages, streamText } from "ai";
+import {
+  convertToModelMessages,
+  createUIMessageStream,
+  createUIMessageStreamResponse,
+  streamText
+} from "ai";
 import { LEAVE_POLICY_TEXT } from "./policy";
 
 export { LEAVE_POLICY_TEXT };
@@ -45,20 +50,86 @@ export class ChatAgent extends AIChatAgent<Env> {
 
   /**
    * Primary streaming handler for the stateful agent chat.
-   * Utilizes Cloudflare Workers AI with the Meta Llama 3.1 8B Instruct model
-   * via the native { binding = "AI" } Workers AI binding.
+   * Utilizes Cloudflare Workers AI with Meta Llama 3.1 8B Instruct.
+   * Normalizes messages so that string contents are cleanly passed to Workers AI.
    */
   async onChatMessage(_onFinish: unknown, options?: OnChatMessageOptions) {
+    // Convert raw persisted messages to model format
+    const rawMessages = await convertToModelMessages(this.messages);
+
+    // Normalize messages: Workers AI instruction models require string content
+    const modelMessages = rawMessages
+      .map((msg) => {
+        let text = "";
+        if (typeof msg.content === "string") {
+          text = msg.content;
+        } else if (Array.isArray(msg.content)) {
+          text = msg.content
+            .map((c: unknown) => {
+              if (typeof c === "string") return c;
+              if (c && typeof c === "object" && "text" in c) {
+                return (c as { text: string }).text || "";
+              }
+              return "";
+            })
+            .join("\n");
+        } else if (msg.content) {
+          text = String(msg.content);
+        }
+        return {
+          role: msg.role as "user" | "assistant" | "system",
+          content: text.trim()
+        };
+      })
+      .filter((msg) => msg.content.length > 0);
+
     const workersai = createWorkersAI({ binding: this.env.AI });
 
-    const result = streamText({
-      model: workersai("@cf/meta/llama-3.1-8b-instruct"),
-      system: HR_SYSTEM_PROMPT,
-      messages: await convertToModelMessages(this.messages),
-      abortSignal: options?.abortSignal
-    });
+    try {
+      const result = streamText({
+        model: workersai("@cf/meta/llama-3.1-8b-instruct", {
+          sessionAffinity: this.sessionAffinity
+        }),
+        system: HR_SYSTEM_PROMPT,
+        messages: modelMessages,
+        abortSignal: options?.abortSignal
+      });
 
-    return result.toUIMessageStreamResponse();
+      return result.toUIMessageStreamResponse();
+    } catch (err) {
+      console.error(
+        "streamText failed, falling back to direct env.AI.run:",
+        err
+      );
+
+      const aiResponse = (await this.env.AI.run(
+        "@cf/meta/llama-3.1-8b-instruct",
+        {
+          messages: [
+            { role: "system", content: HR_SYSTEM_PROMPT },
+            ...modelMessages.map((m) => ({
+              role: m.role,
+              content: m.content
+            }))
+          ]
+        }
+      )) as { response?: string };
+
+      const responseText =
+        aiResponse.response || "I don't know, please contact HR.";
+
+      return createUIMessageStreamResponse({
+        stream: createUIMessageStream({
+          execute({ writer }) {
+            writer.write({
+              type: "text-delta",
+              id: "msg-1",
+              delta: responseText
+            });
+          }
+        })
+      });
+    }
   }
 
   /**
