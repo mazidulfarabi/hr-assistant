@@ -233,7 +233,7 @@ function ChatContent() {
                           style={{ animationDelay: "300ms" }}
                         />
                       </div>
-                      <span>AI is thinking...</span>
+                      <span>Consulting leave policy...</span>
                     </div>
                   ) : (
                     <div className="text-sm text-slate-400 italic">
@@ -267,7 +267,7 @@ function ChatContent() {
                       style={{ animationDelay: "300ms" }}
                     />
                   </div>
-                  <span>AI is thinking...</span>
+                  <span>Consulting leave policy...</span>
                 </div>
               </div>
             </div>
