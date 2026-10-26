@@ -83,11 +83,11 @@ const appTsx = fs.readFileSync("src/app.tsx", "utf8");
 if (!appTsx.includes("XYZ Company HR Leave Assistant")) {
   throw new Error("Header title missing from app.tsx");
 }
-if (!appTsx.includes("bg-blue-900")) {
-  throw new Error("bg-blue-900 header style missing from app.tsx");
+if (!appTsx.includes("bg-slate-900")) {
+  throw new Error("bg-slate-900 header style missing from app.tsx");
 }
-if (!appTsx.includes("bg-teal-50")) {
-  throw new Error("Teal message bubble style missing from app.tsx");
+if (!appTsx.includes("AtomIcon")) {
+  throw new Error("AtomIcon missing from app.tsx");
 }
 console.log(
   "✓ UI/UX requirements (Header, full viewport layout, color palette, sticky bar) satisfied"

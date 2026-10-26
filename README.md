@@ -179,11 +179,11 @@ The assistant’s backend strictly hardcodes three foundational rules within `sr
 
 ### Rule 1: Strict Accuracy & Mandatory Section Citations
 
-- **Constraint**: Answers must be derived exclusively from **HR-POL-004**. Guesses, external assumptions, or policy calculations not explicitly detailed in the document are prohibited.
-- **Mandatory Output**: Every factual response appends the exact policy section in brackets.
+- **Constraint**: Answers must be derived exclusively from **HR-POL-004**. Guesses, outside assumptions, or invented exceptions are strictly prohibited. Basic arithmetic (e.g., addition, multiplication) using the exact numbers in the policy is permitted to answer specific employee scenarios (e.g., 6 months × 1.67 days = 10.02 days).
+- **Mandatory Output**: Every factual response must append the exact policy section in brackets.
 - **Example**:
+  > _"You have earned 10.02 days of Annual Leave. [Section 4.1]"_
   > _"The weekly holidays at XYZ Company are Friday and Saturday. [Section 5.1]"_
-  > _"Employees earn Annual Leave at the rate of 1.67 working days per month of service, totalling 20 working days in a full leave year. [Section 4.1]"_
 
 ### Rule 2: Out of Scope (Zero-Tolerance Fallback)
 
