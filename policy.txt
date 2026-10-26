@@ -10,7 +10,7 @@ Applies to: All permanent full-time employees
 1.Purpose
 This policy sets out the types of leave available to employees of XYZ Company, how leave is earned and used, and how it is requested and approved. It aims to give employees time to rest and attend to personal matters while keeping operations running smoothly.
 
-Scope and Eligibility
+2.Scope and Eligibility
 2.1 This policy applies to all permanent full-time employees of XYZ Company.
 2.2 Employees on probation (the first 3 months of service) may take Casual Leave and Sick Leave from their joining date. Annual Leave accrues during probation but may be taken only after confirmation.
 2.3 Contract employees, part-time employees, interns and consultants are not covered by this policy. Their leave is governed by their individual contracts.
