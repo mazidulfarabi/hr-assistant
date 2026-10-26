@@ -292,7 +292,7 @@ function ChatContent() {
               value={input}
               onChange={handleInputChange}
               onKeyDown={handleKeyDown}
-              placeholder="Ask a question about XYZ Company Leave Policy (e.g., annual leave, sick leave, carry forward rules)..."
+              placeholder="Ask any question about Company Leave Policy..."
               rows={1}
               disabled={isWaiting}
               className="flex-1 bg-transparent border-0 outline-none resize-none px-3 py-1.5 text-sm text-slate-100 placeholder-slate-500 max-h-36 min-h-[38px] leading-relaxed"
