@@ -9,9 +9,9 @@
 - [Overview](#overview)
 - [Problem Statement](#problem-statement)
 - [The Solution](#the-solution)
-- [How It Works Without API Keys](#how-it-works-without-api-keys)
 - [Architecture & Data Flow](#architecture--data-flow)
-- [Benefits of Cloudflare Agents Architecture](#benefits-of-cloudflare-agents-architecture)
+- [Why Cloudflare Agents?](#why-cloudflare-agents)
+- [How It Works Without API Keys](#how-it-works-without-api-keys)
 - [Cloudflare Free Tier Limits & Quotas](#cloudflare-free-tier-limits--quotas)
 - [System Guardrails & Critical Order of Operations](#system-guardrails--critical-order-of-operations)
 - [System Guardrail Verification Matrix (42 Test Cases)](#system-guardrail-verification-matrix-42-test-cases)
@@ -74,23 +74,6 @@ The **XYZ Company HR Leave Assistant** eliminates these liabilities through arch
 
 ---
 
-## How It Works Without API Keys
-
-Conventional AI applications rely on third-party model providers (e.g., OpenAI, Anthropic), requiring secret API keys (`OPENAI_API_KEY`), `.env` configuration files, and outbound HTTPS calls over the public internet (`Authorization: Bearer sk-...`). This setup creates security risks (accidental credential leaks), key rotation overhead, external downtime vulnerabilities, and unpredictable token billing.
-
-The **XYZ Company HR Leave Assistant** operates **100% self-contained without any API keys** through Cloudflare's native **Resource Binding** architecture:
-
-1. **Native Platform Binding (`env.AI`)**:
-   Instead of using external HTTP endpoints, `wrangler.jsonc` declares an internal binding: `{ "binding": "AI" }`. When the Cloudflare Worker compiles, the runtime injects a first-class `env.AI` handle directly into the execution context of the Worker and Durable Object.
-2. **Hypervisor-Level Authentication (Zero Secrets)**:
-   There are no secret keys, passwords, or tokens stored anywhere in the repository, environment files, or deployment variables. Authentication and permission management happen implicitly inside Cloudflare's V8 isolate hypervisor based on your authenticated deployment account.
-3. **Private Edge Network Routing**:
-   When the backend agent calls `this.env.AI.run("@cf/meta/llama-3.1-8b-instruct-fp8", ...)` or initializes `createWorkersAI({ binding: this.env.AI })`, the request never travels over the public internet. Instead, it is dispatched across Cloudflare's private internal network backplane directly to GPU hardware clusters (running NVIDIA GPUs) co-located within Cloudflare data centers.
-4. **Account-Level Quota Tracking**:
-   Usage is tracked automatically against the Cloudflare account quota (such as the 10,000 free Neurons/day). Neither clients nor third parties can intercept or abuse external credentials, completely eliminating unauthorized token usage and egress charges.
-
----
-
 ## Architecture & Data Flow
 
 ### End-to-End Query Lifecycle
@@ -132,9 +115,26 @@ sequenceDiagram
 | **Real-Time Streaming**     | **Native Bidirectional WebSockets**: Built-in stateful WebSocket transport layer provided by the Agents SDK (`agents/react`, `@cloudflare/ai-chat`).                                   | Ultra-low-latency, token-by-token streaming directly to the browser UI with zero polling or repeated HTTP handshakes.                                                           |
 | **Zero Cold Starts**        | **Sub-5ms V8 Isolate Startup**: Built on Cloudflare Workers lightweight V8 isolate architecture across 300+ edge PoPs worldwide.                                                       | Eliminates container provisioning latency (no 500ms–3s container spin-up). First response starts in milliseconds.                                                               |
 | **Automatic Hibernation**   | **Zero-Cost Sleep**: When no active WebSocket messages are being processed, Durable Objects automatically serialize state and hibernate into cold storage.                             | **$0.00 idle cost**. You never pay for idle container capacity or keep-warm pings.                                                                                              |
-| **100% Self-Contained AI**  | **Native `@cloudflare/ai` Binding**: Direct access to Cloudflare Workers AI GPUs running `@cf/meta/llama-3.1-8b-instruct-fp8`.                                                         | Zero third-party API keys (no OpenAI, no Anthropic). Complete insulation against third-party rate limits, secret key leakage, and external bill shock.                          |
+| **Self-Contained AI**       | **Native `@cloudflare/ai` Binding**: Direct access to Cloudflare Workers AI GPUs running `@cf/meta/llama-3.1-8b-instruct-fp8`.                                                         | Zero third-party API keys (no OpenAI, no Anthropic). Complete insulation against third-party rate limits, secret key leakage, and external bill shock.                          |
 | **Data Locality & Privacy** | **Edge-Confined Ingestion & Inference**: Prompt text, policies, and chat histories remain strictly inside Cloudflare's secure network boundary.                                        | Data never traverses multiple cloud providers, simplifying compliance and protecting internal enterprise policies.                                                              |
 | **Unified Edge Deployment** | **Single Atomic Deployment**: Static assets (React SPA), API routes, agent logic, and Workers AI bindings deploy together via `npm run deploy`.                                        | No fragmented infrastructure. Frontend and backend are version-locked and deployed globally in seconds.                                                                         |
+
+---
+
+## How It Works Without API Keys
+
+Conventional AI applications rely on third-party model providers (e.g., OpenAI, Anthropic), requiring secret API keys (`OPENAI_API_KEY`), `.env` configuration files, and outbound HTTPS calls over the public internet (`Authorization: Bearer sk-...`). This setup creates security risks (accidental credential leaks), key rotation overhead, external downtime vulnerabilities, and unpredictable token billing.
+
+The **XYZ Company HR Leave Assistant** operates **fully self-contained without any API keys** through Cloudflare's native **Resource Binding** architecture:
+
+1. **Native Platform Binding (`env.AI`)**:
+   Instead of using external HTTP endpoints, `wrangler.jsonc` declares an internal binding: `{ "binding": "AI" }`. When the Cloudflare Worker compiles, the runtime injects a first-class `env.AI` handle directly into the execution context of the Worker and Durable Object.
+2. **Hypervisor-Level Authentication (Zero Secrets)**:
+   There are no secret keys, passwords, or tokens stored anywhere in the repository, environment files, or deployment variables. Authentication and permission management happen implicitly inside Cloudflare's V8 isolate hypervisor based on the authenticated deployment account.
+3. **Private Edge Network Routing**:
+   When the backend agent calls `this.env.AI.run("@cf/meta/llama-3.1-8b-instruct-fp8", ...)` or initializes `createWorkersAI({ binding: this.env.AI })`, the request never travels over the public internet. Instead, it is dispatched across Cloudflare's private internal network backplane directly to GPU hardware clusters (running NVIDIA GPUs) co-located within Cloudflare data centers.
+4. **Account-Level Quota Tracking**:
+   Usage is tracked automatically against the Cloudflare account quota (such as the 10,000 free Neurons/day). Neither clients nor third parties can intercept or abuse external credentials, completely eliminating unauthorized token usage and egress charges.
 
 ---
 
