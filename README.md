@@ -75,7 +75,7 @@ The **XYZ Company HR Leave Assistant** eliminates these liabilities through arch
 
 ## Architecture & Data Flow
 
-### 1. End-to-End Query Lifecycle
+### End-to-End Query Lifecycle
 
 ```mermaid
 sequenceDiagram
@@ -103,44 +103,6 @@ sequenceDiagram
     DO->>SQLite: Persist Complete Assistant Reply to SQLite Table
     DO->>DO: Enter Hibernation Mode (0 CPU / 0 cost while idle)
 ```
-
-### 2. Edge Topology
-
-```mermaid
-flowchart TD
-    subgraph Client ["Client Layer (Browser)"]
-        UI["React 19 SPA (Dark UI)"]
-        WS["useAgentChat WebSocket Hook"]
-    end
-
-    subgraph Cloudflare ["Cloudflare Global Network (Anycast Edge)"]
-        Assets["Workers Static Assets (Vite Client Bundle)"]
-        Router["Cloudflare Worker Entry (src/server.ts)"]
-
-        subgraph AgentEnv ["Stateful Execution Environment"]
-            DO["Durable Object: ChatAgent"]
-            SQL[("Embedded SQLite DB (Persistent State)")]
-            Prompt["HR_SYSTEM_PROMPT (Full Policy HR-POL-004 v2.0)"]
-        end
-
-        subgraph Compute ["Cloudflare Workers AI Cluster"]
-            GPU["Workers AI (NVIDIA GPUs)"]
-            Model["@cf/meta/llama-3.1-8b-instruct-fp8"]
-        end
-    end
-
-    UI -->|HTTP Request| Assets
-    Assets -->|Delivers Static SPA| UI
-    WS -->|WebSocket Connection| Router
-    Router -->|RPC Forwarding| DO
-    DO -->|Store and Query History| SQL
-    DO -->|Injects Policy Context| Prompt
-    Prompt -->|Inference Dispatch| GPU
-    GPU -->|Accelerated Execution| Model
-    Model -.->|Streamed Tokens| DO
-    DO -.->|Streamed UI Protocol Deltas| WS
-```
-
 ---
 
 ## Why Cloudflare Agents?
