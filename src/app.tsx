@@ -8,18 +8,8 @@ import {
   PaperPlaneRightIcon,
   StopIcon,
   TrashIcon,
-  CheckCircleIcon,
-  SparkleIcon
+  CheckCircleIcon
 } from "@phosphor-icons/react";
-
-const SUGGESTED_QUESTIONS = [
-  "What are the weekly holidays at XYZ Company?",
-  "How many days of Annual Leave am I entitled to each year?",
-  "What is the procedure and notice required for Sick Leave?",
-  "How many unused leave days can I carry forward to next year?",
-  "Can employees on probation take Casual Leave or Annual Leave?",
-  "What is the policy for Maternity and Paternity Leave?"
-];
 
 function ChatContent() {
   const [input, setInput] = useState("");
@@ -150,28 +140,7 @@ function ChatContent() {
                 </p>
               </div>
 
-              <div className="border-t border-slate-800/80 pt-5">
-                <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-3">
-                  Suggested Questions
-                </p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-left max-w-2xl mx-auto">
-                  {SUGGESTED_QUESTIONS.map((question, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => handleSend(question)}
-                      className="p-3 text-xs sm:text-sm font-medium text-slate-300 bg-slate-900/90 hover:bg-slate-800 hover:text-teal-300 border border-slate-800 hover:border-teal-500/40 rounded-xl transition-all duration-150 flex items-start gap-2 shadow-2xs group cursor-pointer"
-                    >
-                      <SparkleIcon
-                        size={16}
-                        className="text-teal-400 mt-0.5 flex-none group-hover:scale-110 transition-transform"
-                      />
-                      <span>{question}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="flex flex-wrap items-center justify-center gap-4 text-xs text-slate-400 pt-2 border-t border-slate-800/80">
+              <div className="flex flex-wrap items-center justify-center gap-4 text-xs text-slate-400 pt-4 border-t border-slate-800/80">
                 <span className="flex items-center gap-1.5 text-slate-400">
                   <CheckCircleIcon size={14} className="text-teal-400" />
                   Mandatory Section Citations
