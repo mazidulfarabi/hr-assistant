@@ -4,7 +4,7 @@
 
 ---
 
-## 📑 Table of Contents
+## Table of Contents
 
 - [Overview](#-overview)
 - [Problem Statement](#-problem-statement)
@@ -19,7 +19,7 @@
 
 ---
 
-## 🌟 Overview
+## Overview
 
 The **XYZ Company HR Leave Assistant** is a self-contained, stateful AI chat solution engineered to provide immediate, compliant, and legally grounded answers regarding XYZ Company's Leave Policy (**HR-POL-004 Version 2.0**).
 
@@ -32,7 +32,7 @@ Unlike conventional stateless chatbots that rely on external vector databases, f
 
 ---
 
-## 🛑 Problem Statement
+## Problem Statement
 
 Enterprise HR departments spend thousands of hours every year fielding repetitive leave inquiries from employees: _“Can I combine casual leave with annual leave?”_, _“What is the sick leave submission deadline?”_, _“How many days carry forward?”_.
 
@@ -46,7 +46,7 @@ Deploying traditional AI chatbots to solve this problem regularly creates severe
 
 ---
 
-## 💡 The Solution
+## The Solution
 
 The **XYZ Company HR Leave Assistant** eliminates these liabilities through architectural guarantees:
 
@@ -72,7 +72,7 @@ The **XYZ Company HR Leave Assistant** eliminates these liabilities through arch
 
 ---
 
-## 📐 Architecture & Data Flow
+## Architecture & Data Flow
 
 ### 1. End-to-End Query Lifecycle
 
@@ -140,7 +140,7 @@ flowchart TD
 
 ---
 
-## 📊 Why Cloudflare Agents? (Comprehensive Comparison)
+## Why Cloudflare Agents? (Comprehensive Comparison)
 
 The table below contrasts the **Cloudflare Agents SDK** architecture against industry-standard **Traditional RAG + Stateless Serverless** approaches:
 
@@ -157,7 +157,7 @@ The table below contrasts the **Cloudflare Agents SDK** architecture against ind
 
 ---
 
-## 💰 Cloudflare Free Tier Limits & Quotas
+## Cloudflare Free Tier Limits & Quotas
 
 Cloudflare offers one of the most generous developer free tiers in the industry. This project is configured to run smoothly within these limits:
 
@@ -173,7 +173,7 @@ Cloudflare offers one of the most generous developer free tiers in the industry.
 
 ---
 
-## 🛡️ System Guardrails & Verification
+## System Guardrails & Verification
 
 The assistant’s backend strictly hardcodes three foundational rules within `src/server.ts` that cannot be overridden by user prompt injections:
 
@@ -199,7 +199,7 @@ The assistant’s backend strictly hardcodes three foundational rules within `sr
 
 ---
 
-## 🎨 UI & Design System
+## UI & Design System
 
 The frontend provides an executive-grade **Dark Mode** interface tailored for corporate environments:
 
@@ -220,7 +220,7 @@ The frontend provides an executive-grade **Dark Mode** interface tailored for co
 
 ---
 
-## 📁 Project Directory Layout
+## Project Directory Layout
 
 ```
 c:\hr-assistant\
@@ -246,7 +246,7 @@ c:\hr-assistant\
 
 ---
 
-## 🚀 Local Development & Deployment Guide
+## Local Development & Deployment Guide
 
 ### 1. Prerequisites
 
@@ -310,7 +310,7 @@ Published hr-assistant (x.xx sec)
 
 ---
 
-## 📄 License & Attribution
+## License & Attribution
 
 This project is created for the **XYZ Company HR Assessment**.  
 Built using the [Cloudflare Agents SDK](https://developers.cloudflare.com/agents/) and [Cloudflare Workers AI](https://developers.cloudflare.com/workers-ai/).
