@@ -143,7 +143,7 @@ flowchart TD
 
 ---
 
-## Why Cloudflare Agents? (Comprehensive Comparison)
+## Why Cloudflare Agents?
 
 | Benefit                     | Cloudflare Agents SDK Mechanism                                                                                                                                                        | Operational & Architectural Impact                                                                                                                                              |
 | :-------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -161,15 +161,15 @@ flowchart TD
 
 Cloudflare offers one of the most generous developer free tiers in the industry. This project is configured to run smoothly within these limits:
 
-| Resource / Product             | Free Tier Quota                     | Application Consumption & Strategy                                                                                                   | Free Tier Exhaustion Impact                                              |
-| :----------------------------- | :---------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------- | :----------------------------------------------------------------------- |
-| **Cloudflare Workers**         | **100,000 requests / day**          | Each page load and WebSocket connection uses 1 request.                                                                              | Throttles to HTTP 429 until daily reset (UTC midnight).                  |
-| **Workers CPU Time**           | **10 ms CPU time / request**        | Durable Object routing and parsing takes < 2ms CPU time.                                                                             | Standard free quota is more than sufficient for light parsing.           |
-| **Cloudflare Workers AI**      | **10,000 Neurons / day**            | `@cf/meta/llama-3.1-8b-instruct-fp8` consumes approx. 20-30 Neurons per chat turn. This yields **~300 to 500 free queries per day**. | Returns error if daily neuron cap is reached until next daily UTC cycle. |
-| **Durable Objects Storage**    | **1 GB SQLite storage**             | Chat logs use ~1 KB per message. 1 GB stores over **1,000,000 chat messages** without additional cost.                               | Writes fail once storage limit is exceeded.                              |
-| **Durable Objects Operations** | **1 Million Read/Write units / mo** | Cached SQLite operations minimize billable DO I/O.                                                                                   | Free tier covers extensive evaluation and small-to-medium team testing.  |
-| **Static Assets (CDN)**        | **Unlimited requests & bandwidth**  | React client bundle (HTML, CSS, JS chunks) is cached at edge locations worldwide with zero egress costs.                             | **No limit** on static asset delivery.                                   |
-| **Idle Time Billing**          | **$0.00 (Zero idle cost)**          | Durable Objects automatically enter hibernation state when no WebSockets are active.                                                 | **No cost incurred** when no users are chatting.                         |
+| Resource / Product             | Free Tier Quota                     | Application Consumption & Strategy                                                                                                   |
+| :----------------------------- | :---------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------- |
+| **Cloudflare Workers**         | **100,000 requests / day**          | Each page load and WebSocket connection uses 1 request.                                                                              |
+| **Workers CPU Time**           | **10 ms CPU time / request**        | Durable Object routing and parsing takes < 2ms CPU time.                                                                             |
+| **Cloudflare Workers AI**      | **10,000 Neurons / day**            | `@cf/meta/llama-3.1-8b-instruct-fp8` consumes approx. 20-30 Neurons per chat turn. This yields **~300 to 500 free queries per day**. |
+| **Durable Objects Storage**    | **1 GB SQLite storage**             | Chat logs use ~1 KB per message. 1 GB stores over **1,000,000 chat messages** without additional cost.                               |
+| **Durable Objects Operations** | **1 Million Read/Write units / mo** | Cached SQLite operations minimize billable DO I/O.                                                                                   |
+| **Static Assets (CDN)**        | **Unlimited requests & bandwidth**  | React client bundle (HTML, CSS, JS chunks) is cached at edge locations worldwide with zero egress costs.                             |
+| **Idle Time Billing**          | **$0.00 (Zero idle cost)**          | Durable Objects automatically enter hibernation state when no WebSockets are active.                                                 |
 
 ---
 
@@ -333,7 +333,7 @@ c:\hr-assistant\
 
 ### 1. Prerequisites
 
-- **Node.js**: v20+ or v24+ LTS installed.
+- **Node.js**: v24+ LTS installed.
 - **Cloudflare Account**: A free Cloudflare account with Workers AI enabled.
 
 ### 2. Installation
@@ -397,5 +397,4 @@ Published hr-assistant (x.xx sec)
 
 ## License & Attribution
 
-This project is created for the **XYZ Company HR Assessment**.  
-Built using the [Cloudflare Agents SDK](https://developers.cloudflare.com/agents/) and [Cloudflare Workers AI](https://developers.cloudflare.com/workers-ai/).
+Built by Md. Mazidul Haque Farabi using the [Cloudflare Agents SDK](https://developers.cloudflare.com/agents/) and [Cloudflare Workers AI](https://developers.cloudflare.com/workers-ai/).
