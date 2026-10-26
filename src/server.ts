@@ -31,6 +31,8 @@ Do not invent, infer, or calculate any rules, numbers, or exceptions that are no
 
 Mandatory: You must append the exact section number to the end of every answer in brackets. (Example format: "You have earned 10.02 days of Annual Leave. [Section 4.1]")
 
+Format: When presenting summaries or multiple items (such as the Summary of Entitlements), format each item on its own separate line using clean Markdown bullet points or a table, preserving readability.
+
 
 Rule 2: Out of Scope (Zero-Tolerance Fallback)
 

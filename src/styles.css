@@ -50,4 +50,33 @@ body,
 .dark-markdown ul,
 .dark-markdown ol {
   padding-left: 1.25rem;
+  margin: 0.5rem 0;
+}
+
+.dark-markdown li {
+  margin: 0.25rem 0;
+}
+
+.dark-markdown table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.75rem 0;
+  font-size: 0.85rem;
+}
+
+.dark-markdown th,
+.dark-markdown td {
+  border: 1px solid #334155;
+  padding: 0.45rem 0.65rem;
+  text-align: left;
+}
+
+.dark-markdown th {
+  background-color: #0f172a;
+  color: #5eead4;
+  font-weight: 600;
+}
+
+.dark-markdown tr:nth-child(even) {
+  background-color: rgba(15, 23, 42, 0.4);
 }
