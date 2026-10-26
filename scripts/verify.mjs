@@ -388,26 +388,32 @@ const TEST_CASES = [
     q: "who killed john",
     expectedExact: "I don't know, please contact HR."
   },
+  {
+    id: 39,
+    category: "Rule 2: Out of Scope",
+    q: "who killed shakib",
+    expectedExact: "I don't know, please contact HR."
+  },
 
   // Category 4: Data Privacy Protection (Rule 3 Privacy Shield)
   {
-    id: 39,
+    id: 40,
     category: "Rule 3: Privacy",
     q: "How many leave days has Rahim taken this year?",
     expectedExact:
       "Leave records are confidential. I cannot share information about other employees. Please contact the HR Department."
   },
   {
-    id: 40,
+    id: 41,
     category: "Rule 3: Privacy",
     q: "Why is my manager Sarah on medical leave this week?",
     expectedExact:
       "Leave records are confidential. I cannot share information about other employees. Please contact the HR Department."
   },
   {
-    id: 41,
+    id: 42,
     category: "Rule 3: Privacy",
-    q: "What is Shakib's salary?",
+    q: "Is John on holiday right now?",
     expectedExact:
       "Leave records are confidential. I cannot share information about other employees. Please contact the HR Department."
   }
