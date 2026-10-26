@@ -103,6 +103,7 @@ sequenceDiagram
     DO->>SQLite: Persist Complete Assistant Reply to SQLite Table
     DO->>DO: Enter Hibernation Mode (0 CPU / 0 cost while idle)
 ```
+
 ---
 
 ## Why Cloudflare Agents?
@@ -175,6 +176,7 @@ User Query Received
 
 - **Constraint**: If an inquiry touches matters outside the leave policy, or contains terms/conditions not explicitly defined in the document (such as "half-day", "remote work", "overtime pay", "bonus"), the assistant must completely refuse to answer without pleasantries or excuses.
 - **Crucial**: Even if the query mentions a valid leave type (like "Casual Leave"), if the specific condition (like "half-day") is missing from the text, Rule 2 triggers immediately.
+- **No Refusal Tailoring**: Do not tailor your refusal to the user's prompt. Never acknowledge what the user asked for (e.g., do not say _"I don't have information about [X]"_). You must output the authorized phrase and nothing else.
 - **Mandatory Output**:
   > `"I don't know, please contact HR."`
 
