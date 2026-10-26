@@ -50,6 +50,11 @@ if (
     "Half-day / specific condition abort rule missing from Rule 2 in server.ts"
   );
 }
+if (!serverTs.includes("Note: You must use semantic understanding")) {
+  throw new Error(
+    "Semantic understanding note missing from Step 2 in server.ts"
+  );
+}
 if (!serverTs.includes("Do not tailor your refusal to the user's prompt")) {
   throw new Error(
     "Refusal tailoring prohibition missing from Rule 2 in server.ts"

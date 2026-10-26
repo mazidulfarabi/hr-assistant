@@ -68,7 +68,7 @@ The **XYZ Company HR Leave Assistant** eliminates these liabilities through arch
 3. **Self-Contained Edge Inference**: Model inference runs entirely on Cloudflare Workers AI GPUs using `@cf/meta/llama-3.1-8b-instruct-fp8`. No tokens leave the Cloudflare network, guaranteeing high throughput and compliance.
 4. **Hardcoded Backend Guardrails**: The Agent backend strictly enforces a **Critical Order of Operations** with three invariant rules:
    - **Step 1: Privacy Check**: Any attempt to query employee-specific records or leave reasons strictly yields: `"Leave records are confidential. I cannot share information about other employees. Please contact the HR Department."`
-   - **Step 2: Out-of-Scope Concepts Check**: Any inquiry containing concepts, conditions, or terms not explicitly written in the policy (e.g., "half-day", "remote work", "work from home", "overtime pay") strictly yields: `"I don't know, please contact HR."`
+   - **Step 2: Out-of-Scope Concepts Check**: Any inquiry asking about concepts, conditions, or terms not explicitly defined in the policy (e.g., "half-day", "remote work", "work from home", "overtime pay") strictly yields: `"I don't know, please contact HR."` Note: Semantic understanding applies (e.g., _"worked on a holiday"_ maps to Section 4.8 _Compensatory Off_). If the core concept is genuinely absent, Rule 2 triggers immediately.
    - **Step 3: Answer & Mandatory Citation**: Every factual statement derived from the policy must cite its exact section in brackets (e.g., `[Section 4.1]`), with basic arithmetic permitted for exact scenario calculations.
 
 ---
