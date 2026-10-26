@@ -366,10 +366,7 @@ function ChatContent() {
               .map((p) => (p as { text: string }).text || "")
               .join("");
 
-            // If it's an assistant message without text and not currently waiting, skip ghost renders
-            if (!isUser && !textContent.trim() && !isWaiting) {
-              return null;
-            }
+            const effectiveText = textContent.trim();
 
             if (isUser) {
               return (
@@ -411,16 +408,16 @@ function ChatContent() {
                   </div>
 
                   {/* Assistant Body */}
-                  {textContent.trim().length > 0 ? (
+                  {effectiveText.length > 0 ? (
                     <Streamdown
                       className="prose prose-sm max-w-none text-slate-800 prose-p:my-1.5 prose-headings:my-2 prose-ul:my-1 text-sm leading-relaxed"
                       plugins={{ code }}
                       controls={false}
                       isAnimating={isLastAssistant && isStreaming}
                     >
-                      {textContent}
+                      {effectiveText}
                     </Streamdown>
-                  ) : (
+                  ) : isWaiting ? (
                     /* Pulsing typing indicator inside the bubble while awaiting first tokens */
                     <div className="flex items-center gap-2 text-teal-800 text-xs font-medium py-1">
                       <div className="flex gap-1 items-center">
@@ -438,6 +435,10 @@ function ChatContent() {
                         />
                       </div>
                       <span>Consulting leave policy...</span>
+                    </div>
+                  ) : (
+                    <div className="text-sm text-slate-700 italic">
+                      I don&apos;t know, please contact HR.
                     </div>
                   )}
                 </div>

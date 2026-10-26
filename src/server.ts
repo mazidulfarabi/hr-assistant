@@ -44,17 +44,60 @@ CONTEXT DOCUMENT (XYZ Company Leave Policy):
 ${LEAVE_POLICY_TEXT}
 ---`;
 
+// Supported active Llama 3 models on Cloudflare Workers AI
+// (@cf/meta/llama-3.1-8b-instruct was superseded by @cf/meta/llama-3.1-8b-instruct-fp8)
+export const LLAMA_CANDIDATE_MODELS = [
+  "@cf/meta/llama-3.1-8b-instruct-fp8",
+  "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
+  "@cf/meta/llama-3.2-3b-instruct"
+] as const;
+
+/**
+ * Execute Llama 3 model inference with automatic fallback across active Workers AI models.
+ */
+async function runLlamaInference(
+  env: Env,
+  messages: Array<{ role: string; content: string }>
+): Promise<string> {
+  let lastError: unknown = null;
+
+  for (const model of LLAMA_CANDIDATE_MODELS) {
+    try {
+      const result = (await env.AI.run(
+        model as Parameters<typeof env.AI.run>[0],
+        {
+          messages
+        }
+      )) as { response?: string };
+
+      if (
+        result &&
+        typeof result.response === "string" &&
+        result.response.trim().length > 0
+      ) {
+        return result.response;
+      }
+    } catch (err) {
+      console.warn(`Llama model ${model} failed, trying alternative:`, err);
+      lastError = err;
+    }
+  }
+
+  throw (
+    lastError ||
+    new Error("Failed to get response from Workers AI Llama models")
+  );
+}
+
 export class ChatAgent extends AIChatAgent<Env> {
   maxPersistedMessages = 100;
   chatRecovery = true;
 
   /**
    * Primary streaming handler for the stateful agent chat.
-   * Utilizes Cloudflare Workers AI with Meta Llama 3.1 8B Instruct.
-   * Normalizes messages so that string contents are cleanly passed to Workers AI.
+   * Utilizes Cloudflare Workers AI with Llama 3 instruction models.
    */
   async onChatMessage(_onFinish: unknown, options?: OnChatMessageOptions) {
-    // Convert raw persisted messages to model format
     const rawMessages = await convertToModelMessages(this.messages);
 
     // Normalize messages: Workers AI instruction models require string content
@@ -84,52 +127,57 @@ export class ChatAgent extends AIChatAgent<Env> {
       .filter((msg) => msg.content.length > 0);
 
     const workersai = createWorkersAI({ binding: this.env.AI });
+    const primaryModel = LLAMA_CANDIDATE_MODELS[0];
+    const sessionAffinity = this.sessionAffinity;
+    const env = this.env;
 
-    try {
-      const result = streamText({
-        model: workersai("@cf/meta/llama-3.1-8b-instruct", {
-          sessionAffinity: this.sessionAffinity
-        }),
-        system: HR_SYSTEM_PROMPT,
-        messages: modelMessages,
-        abortSignal: options?.abortSignal
-      });
-
-      return result.toUIMessageStreamResponse();
-    } catch (err) {
-      console.error(
-        "streamText failed, falling back to direct env.AI.run:",
-        err
-      );
-
-      const aiResponse = (await this.env.AI.run(
-        "@cf/meta/llama-3.1-8b-instruct",
-        {
-          messages: [
-            { role: "system", content: HR_SYSTEM_PROMPT },
-            ...modelMessages.map((m) => ({
-              role: m.role,
-              content: m.content
-            }))
-          ]
-        }
-      )) as { response?: string };
-
-      const responseText =
-        aiResponse.response || "I don't know, please contact HR.";
-
-      return createUIMessageStreamResponse({
-        stream: createUIMessageStream({
-          execute({ writer }) {
-            writer.write({
-              type: "text-delta",
-              id: "msg-1",
-              delta: responseText
+    return createUIMessageStreamResponse({
+      stream: createUIMessageStream({
+        execute: async ({ writer }) => {
+          try {
+            const result = streamText({
+              model: workersai(primaryModel, {
+                sessionAffinity
+              }),
+              system: HR_SYSTEM_PROMPT,
+              messages: modelMessages,
+              abortSignal: options?.abortSignal
             });
+
+            writer.merge(result.toUIMessageStream());
+          } catch (streamErr) {
+            console.warn(
+              "streamText failed to initialize, falling back to direct Workers AI run:",
+              streamErr
+            );
+
+            try {
+              const reply = await runLlamaInference(env, [
+                { role: "system", content: HR_SYSTEM_PROMPT },
+                ...modelMessages.map((m) => ({
+                  role: m.role,
+                  content: m.content
+                }))
+              ]);
+
+              writer.write({
+                type: "text-delta",
+                id: "fallback-text-1",
+                delta: reply
+              });
+            } catch (fallbackErr) {
+              console.error("Direct fallback also failed:", fallbackErr);
+              writer.write({
+                type: "text-delta",
+                id: "fallback-text-err",
+                delta: "I don't know, please contact HR."
+              });
+            }
           }
-        })
-      });
-    }
+        },
+        onError: () => "I don't know, please contact HR."
+      })
+    });
   }
 
   /**
@@ -137,17 +185,10 @@ export class ChatAgent extends AIChatAgent<Env> {
    */
   @callable()
   async askQuestion(question: string): Promise<string> {
-    const aiResponse = (await this.env.AI.run(
-      "@cf/meta/llama-3.1-8b-instruct",
-      {
-        messages: [
-          { role: "system", content: HR_SYSTEM_PROMPT },
-          { role: "user", content: question }
-        ]
-      }
-    )) as { response?: string };
-
-    return aiResponse.response || "";
+    return await runLlamaInference(this.env, [
+      { role: "system", content: HR_SYSTEM_PROMPT },
+      { role: "user", content: question }
+    ]);
   }
 }
 
@@ -174,14 +215,12 @@ export default {
           );
         }
 
-        const aiResponse = await env.AI.run("@cf/meta/llama-3.1-8b-instruct", {
-          messages: [
-            { role: "system", content: HR_SYSTEM_PROMPT },
-            { role: "user", content: message }
-          ]
-        });
+        const reply = await runLlamaInference(env, [
+          { role: "system", content: HR_SYSTEM_PROMPT },
+          { role: "user", content: message }
+        ]);
 
-        return new Response(JSON.stringify(aiResponse), {
+        return new Response(JSON.stringify({ response: reply }), {
           headers: { "Content-Type": "application/json" }
         });
       } catch (err: unknown) {
