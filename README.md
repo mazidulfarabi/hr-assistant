@@ -6,17 +6,18 @@
 
 ## Table of Contents
 
-- [Overview](#-overview)
-- [Problem Statement](#-problem-statement)
-- [The Solution](#-the-solution)
-- [Architecture & Data Flow](#-architecture--data-flow)
-- [Benefits of Cloudflare Agents Architecture](#-benefits-of-cloudflare-agents-architecture)
-- [Cloudflare Free Tier Limits & Quotas](#-cloudflare-free-tier-limits--quotas)
-- [System Guardrails & Critical Order of Operations](#-system-guardrails--critical-order-of-operations)
-- [System Guardrail Verification Matrix (40 Test Cases)](#-system-guardrail-verification-matrix-40-test-cases)
-- [UI & Design System](#-ui--design-system)
-- [Project Directory Layout](#-project-directory-layout)
-- [Local Development & Deployment Guide](#-local-development--deployment-guide)
+- [Overview](#overview)
+- [Problem Statement](#problem-statement)
+- [The Solution](#the-solution)
+- [How It Works Without API Keys](#how-it-works-without-api-keys)
+- [Architecture & Data Flow](#architecture--data-flow)
+- [Benefits of Cloudflare Agents Architecture](#benefits-of-cloudflare-agents-architecture)
+- [Cloudflare Free Tier Limits & Quotas](#cloudflare-free-tier-limits--quotas)
+- [System Guardrails & Critical Order of Operations](#system-guardrails--critical-order-of-operations)
+- [System Guardrail Verification Matrix (42 Test Cases)](#system-guardrail-verification-matrix-42-test-cases)
+- [UI & Design System](#ui--design-system)
+- [Project Directory Layout](#project-directory-layout)
+- [Local Development & Deployment Guide](#local-development--deployment-guide)
 
 ---
 
@@ -70,6 +71,23 @@ The **XYZ Company HR Leave Assistant** eliminates these liabilities through arch
    - **Step 1: Privacy Check**: Any attempt to query employee-specific records or leave reasons strictly yields: `"Leave records are confidential. I cannot share information about other employees. Please contact the HR Department."`
    - **Step 2: Out-of-Scope Concepts Check**: Any inquiry asking about concepts, conditions, or terms not explicitly defined in the policy (e.g., "half-day", "remote work", "work from home", "overtime pay") strictly yields: `"I don't know, please contact HR."` Note: Semantic understanding applies (e.g., _"worked on a holiday"_ maps to Section 4.8 _Compensatory Off_). If the core concept is genuinely absent, Rule 2 triggers immediately.
    - **Step 3: Answer & Mandatory Citation**: Every factual statement derived from the policy must cite its exact section in brackets (e.g., `[Section 4.1]`), with basic arithmetic permitted for exact scenario calculations.
+
+---
+
+## How It Works Without API Keys
+
+Conventional AI applications rely on third-party model providers (e.g., OpenAI, Anthropic), requiring secret API keys (`OPENAI_API_KEY`), `.env` configuration files, and outbound HTTPS calls over the public internet (`Authorization: Bearer sk-...`). This setup creates security risks (accidental credential leaks), key rotation overhead, external downtime vulnerabilities, and unpredictable token billing.
+
+The **XYZ Company HR Leave Assistant** operates **100% self-contained without any API keys** through Cloudflare's native **Resource Binding** architecture:
+
+1. **Native Platform Binding (`env.AI`)**:
+   Instead of using external HTTP endpoints, `wrangler.jsonc` declares an internal binding: `{ "binding": "AI" }`. When the Cloudflare Worker compiles, the runtime injects a first-class `env.AI` handle directly into the execution context of the Worker and Durable Object.
+2. **Hypervisor-Level Authentication (Zero Secrets)**:
+   There are no secret keys, passwords, or tokens stored anywhere in the repository, environment files, or deployment variables. Authentication and permission management happen implicitly inside Cloudflare's V8 isolate hypervisor based on your authenticated deployment account.
+3. **Private Edge Network Routing**:
+   When the backend agent calls `this.env.AI.run("@cf/meta/llama-3.1-8b-instruct-fp8", ...)` or initializes `createWorkersAI({ binding: this.env.AI })`, the request never travels over the public internet. Instead, it is dispatched across Cloudflare's private internal network backplane directly to GPU hardware clusters (running NVIDIA GPUs) co-located within Cloudflare data centers.
+4. **Account-Level Quota Tracking**:
+   Usage is tracked automatically against the Cloudflare account quota (such as the 10,000 free Neurons/day). Neither clients nor third parties can intercept or abuse external credentials, completely eliminating unauthorized token usage and egress charges.
 
 ---
 
