@@ -4,14 +4,12 @@ import { useAgentChat } from "@cloudflare/ai-chat/react";
 import { Streamdown } from "streamdown";
 import { code } from "@streamdown/code";
 import {
+  AtomIcon,
   PaperPlaneRightIcon,
   StopIcon,
   TrashIcon,
-  InfoIcon,
   CheckCircleIcon,
-  FileTextIcon,
-  SparkleIcon,
-  ShieldCheckIcon
+  SparkleIcon
 } from "@phosphor-icons/react";
 
 const SUGGESTED_QUESTIONS = [
@@ -23,123 +21,14 @@ const SUGGESTED_QUESTIONS = [
   "What is the policy for Maternity and Paternity Leave?"
 ];
 
-function PolicyModal({
-  isOpen,
-  onClose
-}: {
-  isOpen: boolean;
-  onClose: () => void;
-}) {
-  if (!isOpen) return null;
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[85vh] flex flex-col overflow-hidden border border-slate-200">
-        <div className="bg-blue-900 text-white px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <FileTextIcon size={24} className="text-teal-300" />
-            <div>
-              <h3 className="font-bold text-lg">XYZ Company Leave Policy</h3>
-              <p className="text-xs text-blue-200">
-                HR-POL-004 • Version 2.0 • Effective 1 Jan 2026
-              </p>
-            </div>
-          </div>
-          <button
-            onClick={onClose}
-            className="text-blue-200 hover:text-white p-1 rounded-lg hover:bg-white/10 transition-colors cursor-pointer"
-            aria-label="Close modal"
-          >
-            ✕
-          </button>
-        </div>
-
-        <div className="p-6 overflow-y-auto space-y-4 text-sm text-slate-700 leading-relaxed">
-          <div className="p-3 bg-blue-50 border border-blue-200 rounded-xl text-blue-900">
-            <p className="font-medium">
-              This assistant adheres strictly to{" "}
-              <strong>XYZ Company Policy HR-POL-004</strong>. All responses cite
-              the exact section number and adhere to strict privacy rules.
-            </p>
-          </div>
-
-          <h4 className="font-semibold text-slate-900 border-b pb-1 text-base">
-            Key Leave Entitlements Summary
-          </h4>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div className="p-3 rounded-xl border border-slate-200 bg-slate-50">
-              <span className="font-semibold text-slate-900">
-                Annual Leave:
-              </span>{" "}
-              20 working days/year (accrues 1.67 days/month). Max 10 carry
-              forward until 31 Mar. [Sec 4.1]
-            </div>
-            <div className="p-3 rounded-xl border border-slate-200 bg-slate-50">
-              <span className="font-semibold text-slate-900">
-                Casual Leave:
-              </span>{" "}
-              8 working days/year. Max 3 consecutive days. Cannot carry forward.
-              [Sec 4.2]
-            </div>
-            <div className="p-3 rounded-xl border border-slate-200 bg-slate-50">
-              <span className="font-semibold text-slate-900">Sick Leave:</span>{" "}
-              12 working days/year. Medical cert required if &gt; 2 consecutive
-              days. [Sec 4.3]
-            </div>
-            <div className="p-3 rounded-xl border border-slate-200 bg-slate-50">
-              <span className="font-semibold text-slate-900">
-                Maternity & Paternity:
-              </span>{" "}
-              16 weeks maternity (after 6 mo service). 7 calendar days
-              paternity. [Sec 4.4, 4.5]
-            </div>
-          </div>
-
-          <h4 className="font-semibold text-slate-900 border-b pb-1 text-base">
-            Core Assistance Rules
-          </h4>
-          <ul className="list-disc pl-5 space-y-1 text-xs text-slate-600">
-            <li>
-              <strong>Mandatory Citations:</strong> Answers always include
-              section citations (e.g. [Section 4.1]).
-            </li>
-            <li>
-              <strong>Strict Fallback:</strong> Out-of-scope inquiries return:{" "}
-              <em>&quot;I don&apos;t know, please contact HR.&quot;</em>
-            </li>
-            <li>
-              <strong>Data Privacy:</strong> Queries regarding other employee
-              records are strictly denied.
-            </li>
-          </ul>
-        </div>
-
-        <div className="bg-slate-50 px-6 py-3 border-t border-slate-200 flex justify-end">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 bg-blue-900 text-white rounded-xl text-sm font-medium hover:bg-blue-800 transition-colors cursor-pointer"
-          >
-            Close
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function ChatContent() {
   const [input, setInput] = useState("");
-  const [connected, setConnected] = useState(false);
-  const [isPolicyModalOpen, setIsPolicyModalOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Initialize the Cloudflare Agent connection with connection listeners
+  // Initialize Cloudflare Agent connection
   const agent = useAgent({
-    agent: "ChatAgent",
-    onOpen: useCallback(() => setConnected(true), []),
-    onClose: useCallback(() => setConnected(false), []),
-    onError: useCallback(() => setConnected(false), [])
+    agent: "ChatAgent"
   });
 
   // Connect stateful chat hooks with automatic persistence in Durable Objects SQLite
@@ -197,128 +86,72 @@ function ChatContent() {
     messages.length > 0 && messages[messages.length - 1].role === "assistant";
 
   return (
-    <div className="flex flex-col h-screen w-screen bg-slate-100 text-slate-800 font-sans overflow-hidden">
-      {/* Policy Modal */}
-      <PolicyModal
-        isOpen={isPolicyModalOpen}
-        onClose={() => setIsPolicyModalOpen(false)}
-      />
-
-      {/* STEP 5: Fixed Header */}
-      <header className="bg-blue-900 text-white shadow-md z-30 flex-none border-b border-blue-950">
+    <div className="flex flex-col h-screen w-screen bg-slate-950 text-slate-100 font-sans overflow-hidden">
+      {/* Top Header - Dark corporate aesthetic with Atom icon */}
+      <header className="bg-slate-900 border-b border-slate-800 text-white shadow-md z-30 flex-none">
         <div className="max-w-5xl mx-auto px-4 py-3 sm:py-3.5 flex items-center justify-between">
-          {/* Logo & Assistant Identity */}
+          {/* Identity: Atom Icon & Assistant Title */}
           <div className="flex items-center gap-3">
-            <div className="bg-white/10 p-1 rounded-xl border border-white/20 backdrop-blur-xs flex items-center justify-center">
-              <img
-                src="/xyz.png"
-                alt="XYZ Company Logo"
-                className="h-8 sm:h-9 w-auto object-contain"
-                onError={(e) => {
-                  (e.target as HTMLElement).style.display = "none";
-                }}
-              />
+            <div className="bg-teal-500/10 p-2 rounded-xl border border-teal-500/20 flex items-center justify-center">
+              <AtomIcon size={24} className="text-teal-400" weight="bold" />
             </div>
             <div>
-              <h1 className="text-base sm:text-lg font-bold tracking-tight text-white flex items-center gap-2">
+              <h1 className="text-base sm:text-lg font-bold tracking-tight text-slate-100">
                 XYZ Company HR Leave Assistant
-                <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-teal-500/20 text-teal-300 border border-teal-400/30">
-                  <ShieldCheckIcon size={12} />
-                  HR-POL-004
-                </span>
               </h1>
-              <p className="text-xs text-blue-200">
-                Official Leave Policy Advisor • Cloudflare Workers AI
+              <p className="text-xs text-slate-400">
+                Official Leave Policy Advisor
               </p>
             </div>
           </div>
 
-          {/* Header Action Controls */}
-          <div className="flex items-center gap-2 sm:gap-3">
-            {/* Connection Status Pill */}
-            <div
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${
-                connected
-                  ? "bg-teal-900/60 border-teal-500/40 text-teal-200"
-                  : "bg-amber-900/50 border-amber-500/40 text-amber-200"
-              }`}
-              title={
-                connected
-                  ? "Connected to Cloudflare Agent"
-                  : "Connecting to Agent..."
-              }
-            >
-              <span
-                className={`w-2 h-2 rounded-full ${
-                  connected ? "bg-teal-400 animate-pulse" : "bg-amber-400"
-                }`}
-              />
-              <span className="hidden md:inline">
-                {connected ? "Connected" : "Connecting"}
-              </span>
-            </div>
-
-            {/* Policy Info Button */}
-            <button
-              onClick={() => setIsPolicyModalOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium bg-blue-800/80 hover:bg-blue-700/80 text-blue-100 border border-blue-700/60 transition-colors shadow-xs cursor-pointer"
-              title="View Policy Summary"
-            >
-              <InfoIcon size={15} />
-              <span className="hidden sm:inline">Policy</span>
-            </button>
-
-            {/* Clear History Button */}
+          {/* Header Action: Delete History button */}
+          <div className="flex items-center gap-2">
             <button
               onClick={() => {
                 if (
                   window.confirm(
-                    "Start a new conversation? This will clear the chat history."
+                    "Start a new conversation? This will delete the chat history."
                   )
                 ) {
                   clearHistory();
                 }
               }}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium bg-blue-800/80 hover:bg-rose-900/80 text-blue-100 hover:text-white border border-blue-700/60 hover:border-rose-700/60 transition-colors shadow-xs cursor-pointer"
-              title="Clear conversation history"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-800 hover:bg-rose-950/70 text-slate-300 hover:text-rose-200 border border-slate-700 hover:border-rose-800/60 transition-colors shadow-xs cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+              title="Delete conversation history"
               disabled={messages.length === 0}
             >
               <TrashIcon size={15} />
-              <span className="hidden sm:inline">Reset</span>
+              <span>Delete History</span>
             </button>
           </div>
         </div>
       </header>
 
-      {/* STEP 5: Scrollable Message History Area */}
-      <main className="flex-1 overflow-y-auto px-4 py-6 md:px-6">
+      {/* Scrollable Message History Area */}
+      <main className="flex-1 overflow-y-auto px-4 py-6 md:px-6 bg-slate-950">
         <div className="max-w-4xl mx-auto space-y-4">
           {/* Welcome Screen / Empty State */}
           {messages.length === 0 && (
-            <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-slate-200/90 text-center my-4 space-y-6">
-              <div className="inline-flex p-3 rounded-2xl bg-blue-50 border border-blue-100 shadow-inner">
-                <img
-                  src="/xyz.png"
-                  alt="XYZ Company"
-                  className="h-12 w-auto object-contain"
-                />
+            <div className="bg-slate-900/80 rounded-3xl p-6 sm:p-8 shadow-xl border border-slate-800 text-center my-4 space-y-6">
+              <div className="inline-flex p-3.5 rounded-2xl bg-teal-500/10 border border-teal-500/20 shadow-inner">
+                <AtomIcon size={38} className="text-teal-400" weight="bold" />
               </div>
 
               <div className="max-w-xl mx-auto space-y-2">
-                <h2 className="text-xl sm:text-2xl font-bold text-slate-900">
+                <h2 className="text-xl sm:text-2xl font-bold text-slate-100">
                   Welcome to XYZ Company HR Assistant
                 </h2>
-                <p className="text-sm text-slate-600 leading-relaxed">
+                <p className="text-sm text-slate-400 leading-relaxed">
                   I am your official assistant for XYZ Company&apos;s Leave
-                  Policy (HR-POL-004). I can answer all questions regarding your
-                  leave entitlements, probation guidelines, application
-                  timelines in PeopleHub, carry-forward limits, and
-                  confidentiality.
+                  Policy (HR-POL-004). Ask any question regarding leave
+                  entitlements, carry-forward limits, probation rules,
+                  application timelines in PeopleHub, or confidentiality.
                 </p>
               </div>
 
-              <div className="border-t border-slate-100 pt-5">
-                <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3">
+              <div className="border-t border-slate-800/80 pt-5">
+                <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-3">
                   Suggested Questions
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-left max-w-2xl mx-auto">
@@ -326,11 +159,11 @@ function ChatContent() {
                     <button
                       key={idx}
                       onClick={() => handleSend(question)}
-                      className="p-3 text-xs sm:text-sm font-medium text-slate-700 bg-slate-50 hover:bg-teal-50/80 hover:text-teal-900 border border-slate-200 hover:border-teal-300 rounded-xl transition-all duration-150 flex items-start gap-2 shadow-2xs group cursor-pointer"
+                      className="p-3 text-xs sm:text-sm font-medium text-slate-300 bg-slate-900/90 hover:bg-slate-800 hover:text-teal-300 border border-slate-800 hover:border-teal-500/40 rounded-xl transition-all duration-150 flex items-start gap-2 shadow-2xs group cursor-pointer"
                     >
                       <SparkleIcon
                         size={16}
-                        className="text-teal-600 mt-0.5 flex-none group-hover:scale-110 transition-transform"
+                        className="text-teal-400 mt-0.5 flex-none group-hover:scale-110 transition-transform"
                       />
                       <span>{question}</span>
                     </button>
@@ -338,18 +171,18 @@ function ChatContent() {
                 </div>
               </div>
 
-              <div className="flex flex-wrap items-center justify-center gap-4 text-xs text-slate-400 pt-2 border-t border-slate-100">
-                <span className="flex items-center gap-1">
-                  <CheckCircleIcon size={14} className="text-teal-600" />
+              <div className="flex flex-wrap items-center justify-center gap-4 text-xs text-slate-400 pt-2 border-t border-slate-800/80">
+                <span className="flex items-center gap-1.5 text-slate-400">
+                  <CheckCircleIcon size={14} className="text-teal-400" />
                   Mandatory Section Citations
                 </span>
-                <span className="flex items-center gap-1">
-                  <CheckCircleIcon size={14} className="text-teal-600" />
+                <span className="flex items-center gap-1.5 text-slate-400">
+                  <CheckCircleIcon size={14} className="text-teal-400" />
                   Strict Employee Privacy Guard
                 </span>
-                <span className="flex items-center gap-1">
-                  <CheckCircleIcon size={14} className="text-teal-600" />
-                  Workers AI (@cf/meta/llama-3.1-8b-instruct)
+                <span className="flex items-center gap-1.5 text-slate-400">
+                  <CheckCircleIcon size={14} className="text-teal-400" />
+                  Zero Hallucination Tolerance
                 </span>
               </div>
             </div>
@@ -374,12 +207,12 @@ function ChatContent() {
                   key={message.id || msgIdx}
                   className="flex justify-end items-end gap-2.5 my-1"
                 >
-                  <div className="bg-slate-200 text-slate-900 border border-slate-300/80 rounded-2xl rounded-br-xs px-4 py-3 max-w-[85%] sm:max-w-[75%] shadow-xs">
+                  <div className="bg-slate-800 text-slate-100 border border-slate-700/80 rounded-2xl rounded-br-xs px-4 py-3 max-w-[85%] sm:max-w-[75%] shadow-xs">
                     <p className="text-sm leading-relaxed whitespace-pre-wrap">
                       {textContent}
                     </p>
                   </div>
-                  <div className="flex-none w-7 h-7 rounded-full bg-blue-900 text-white flex items-center justify-center font-bold text-[10px] shadow-xs">
+                  <div className="flex-none w-7 h-7 rounded-full bg-slate-700 border border-slate-600 text-slate-200 flex items-center justify-center font-bold text-[10px] shadow-xs">
                     You
                   </div>
                 </div>
@@ -392,25 +225,22 @@ function ChatContent() {
                 key={message.id || msgIdx}
                 className="flex justify-start items-start gap-2.5 my-2"
               >
-                <div className="flex-none w-8 h-8 rounded-full bg-teal-700 text-white flex items-center justify-center font-bold text-xs shadow-xs mt-0.5">
+                <div className="flex-none w-8 h-8 rounded-full bg-teal-950 border border-teal-600/50 text-teal-300 flex items-center justify-center font-bold text-xs shadow-xs mt-0.5">
                   HR
                 </div>
 
-                <div className="bg-teal-50/90 text-slate-800 border border-teal-200 rounded-2xl rounded-tl-xs px-4 py-3.5 shadow-xs max-w-[90%] sm:max-w-[80%]">
-                  {/* Assistant Header */}
-                  <div className="flex items-center gap-2 mb-2 pb-1 border-b border-teal-200/50">
-                    <span className="text-xs font-bold text-teal-950">
+                <div className="bg-slate-900 text-slate-100 border border-slate-800 rounded-2xl rounded-tl-xs px-4 py-3.5 shadow-sm max-w-[90%] sm:max-w-[80%]">
+                  {/* Assistant Header - Clean title with NO HR-POL-004 badge */}
+                  <div className="flex items-center gap-2 mb-2 pb-1.5 border-b border-slate-800">
+                    <span className="text-xs font-semibold text-teal-400">
                       XYZ HR Assistant
-                    </span>
-                    <span className="text-[10px] text-teal-800 font-semibold bg-teal-200/60 px-1.5 py-0.5 rounded">
-                      HR-POL-004
                     </span>
                   </div>
 
                   {/* Assistant Body */}
                   {effectiveText.length > 0 ? (
                     <Streamdown
-                      className="prose prose-sm max-w-none text-slate-800 prose-p:my-1.5 prose-headings:my-2 prose-ul:my-1 text-sm leading-relaxed"
+                      className="dark-markdown text-slate-200 text-sm leading-relaxed"
                       plugins={{ code }}
                       controls={false}
                       isAnimating={isLastAssistant && isStreaming}
@@ -418,26 +248,26 @@ function ChatContent() {
                       {effectiveText}
                     </Streamdown>
                   ) : isWaiting ? (
-                    /* Pulsing typing indicator inside the bubble while awaiting first tokens */
-                    <div className="flex items-center gap-2 text-teal-800 text-xs font-medium py-1">
+                    /* Pulsing typing indicator */
+                    <div className="flex items-center gap-2 text-teal-400 text-xs font-medium py-1">
                       <div className="flex gap-1 items-center">
                         <span
-                          className="w-2 h-2 rounded-full bg-teal-600 animate-bounce"
+                          className="w-2 h-2 rounded-full bg-teal-400 animate-bounce"
                           style={{ animationDelay: "0ms" }}
                         />
                         <span
-                          className="w-2 h-2 rounded-full bg-teal-600 animate-bounce"
+                          className="w-2 h-2 rounded-full bg-teal-400 animate-bounce"
                           style={{ animationDelay: "150ms" }}
                         />
                         <span
-                          className="w-2 h-2 rounded-full bg-teal-600 animate-bounce"
+                          className="w-2 h-2 rounded-full bg-teal-400 animate-bounce"
                           style={{ animationDelay: "300ms" }}
                         />
                       </div>
                       <span>Consulting leave policy...</span>
                     </div>
                   ) : (
-                    <div className="text-sm text-slate-700 italic">
+                    <div className="text-sm text-slate-400 italic">
                       I don&apos;t know, please contact HR.
                     </div>
                   )}
@@ -446,25 +276,25 @@ function ChatContent() {
             );
           })}
 
-          {/* Fallback loading indicator if turn just began and assistant message object is not yet instantiated */}
+          {/* Fallback loading indicator if turn just began */}
           {isWaiting && !hasAssistantTurn && (
             <div className="flex justify-start items-start gap-2.5 my-2">
-              <div className="flex-none w-8 h-8 rounded-full bg-teal-700 text-white flex items-center justify-center font-bold text-xs shadow-xs mt-0.5">
+              <div className="flex-none w-8 h-8 rounded-full bg-teal-950 border border-teal-600/50 text-teal-300 flex items-center justify-center font-bold text-xs shadow-xs mt-0.5">
                 HR
               </div>
-              <div className="bg-teal-50/90 border border-teal-200 rounded-2xl rounded-tl-xs px-4 py-3 shadow-xs">
-                <div className="flex items-center gap-2 text-teal-800 text-xs font-medium">
+              <div className="bg-slate-900 border border-slate-800 rounded-2xl rounded-tl-xs px-4 py-3 shadow-sm">
+                <div className="flex items-center gap-2 text-teal-400 text-xs font-medium">
                   <div className="flex gap-1 items-center">
                     <span
-                      className="w-2 h-2 rounded-full bg-teal-600 animate-bounce"
+                      className="w-2 h-2 rounded-full bg-teal-400 animate-bounce"
                       style={{ animationDelay: "0ms" }}
                     />
                     <span
-                      className="w-2 h-2 rounded-full bg-teal-600 animate-bounce"
+                      className="w-2 h-2 rounded-full bg-teal-400 animate-bounce"
                       style={{ animationDelay: "150ms" }}
                     />
                     <span
-                      className="w-2 h-2 rounded-full bg-teal-600 animate-bounce"
+                      className="w-2 h-2 rounded-full bg-teal-400 animate-bounce"
                       style={{ animationDelay: "300ms" }}
                     />
                   </div>
@@ -478,8 +308,8 @@ function ChatContent() {
         </div>
       </main>
 
-      {/* STEP 5: Sticky Input Bar at Bottom */}
-      <footer className="sticky bottom-0 z-20 bg-white/95 backdrop-blur-md border-t border-slate-200 px-4 py-3 md:py-4 shadow-lg">
+      {/* Sticky Input Bar at Bottom */}
+      <footer className="sticky bottom-0 z-20 bg-slate-950/95 backdrop-blur-md border-t border-slate-800 px-4 py-3 md:py-4 shadow-xl">
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -487,7 +317,7 @@ function ChatContent() {
           }}
           className="max-w-4xl mx-auto"
         >
-          <div className="flex items-end gap-2 sm:gap-3 bg-slate-50 border border-slate-300 focus-within:border-blue-800 focus-within:ring-2 focus-within:ring-blue-100 rounded-2xl p-2 transition-all shadow-inner">
+          <div className="flex items-end gap-2 sm:gap-3 bg-slate-900 border border-slate-800 focus-within:border-teal-500 focus-within:ring-2 focus-within:ring-teal-500/20 rounded-2xl p-2 transition-all shadow-inner">
             <textarea
               ref={textareaRef}
               value={input}
@@ -496,14 +326,14 @@ function ChatContent() {
               placeholder="Ask a question about XYZ Company Leave Policy (e.g., annual leave, sick leave, carry forward rules)..."
               rows={1}
               disabled={isWaiting}
-              className="flex-1 bg-transparent border-0 outline-none resize-none px-3 py-1.5 text-sm text-slate-800 placeholder-slate-400 max-h-36 min-h-[38px] leading-relaxed"
+              className="flex-1 bg-transparent border-0 outline-none resize-none px-3 py-1.5 text-sm text-slate-100 placeholder-slate-500 max-h-36 min-h-[38px] leading-relaxed"
             />
 
             {isWaiting ? (
               <button
                 type="button"
                 onClick={stop}
-                className="flex-none p-2.5 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-700 transition-colors shadow-xs cursor-pointer"
+                className="flex-none p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors shadow-xs cursor-pointer"
                 title="Stop generation"
                 aria-label="Stop generation"
               >
@@ -512,8 +342,8 @@ function ChatContent() {
             ) : (
               <button
                 type="submit"
-                disabled={!input.trim() || !connected}
-                className="flex-none p-2.5 rounded-xl bg-blue-900 hover:bg-blue-800 active:bg-blue-950 text-white transition-colors shadow-xs disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                disabled={!input.trim()}
+                className="flex-none p-2.5 rounded-xl bg-teal-600 hover:bg-teal-500 active:bg-teal-700 text-white transition-colors shadow-xs disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
                 title="Send message"
                 aria-label="Send message"
               >
@@ -522,12 +352,12 @@ function ChatContent() {
             )}
           </div>
 
-          <div className="flex items-center justify-between text-[11px] text-slate-400 mt-2 px-1">
+          <div className="flex items-center justify-between text-[11px] text-slate-500 mt-2 px-1">
             <span>
               Press <strong>Enter</strong> to send,{" "}
               <strong>Shift + Enter</strong> for newline
             </span>
-            <span>XYZ Company HR Assistant • Cloudflare Workers AI</span>
+            <span>XYZ Company HR Assistant</span>
           </div>
         </form>
       </footer>
@@ -539,8 +369,8 @@ export default function App() {
   return (
     <Suspense
       fallback={
-        <div className="flex flex-col items-center justify-center h-screen w-screen bg-slate-100 text-slate-500 gap-3">
-          <div className="w-8 h-8 border-3 border-blue-900 border-t-transparent rounded-full animate-spin" />
+        <div className="flex flex-col items-center justify-center h-screen w-screen bg-slate-950 text-slate-400 gap-3">
+          <div className="w-8 h-8 border-3 border-teal-500 border-t-transparent rounded-full animate-spin" />
           <p className="text-sm font-medium">Loading XYZ HR Assistant...</p>
         </div>
       }
