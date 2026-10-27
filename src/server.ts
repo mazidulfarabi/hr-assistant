@@ -151,6 +151,24 @@ async function runLlamaInference(
   );
 }
 
+type StreamWriter = Parameters<
+  Parameters<typeof createUIMessageStream>[0]["execute"]
+>[0]["writer"];
+
+function writeCompleteTextMessage(
+  writer: StreamWriter,
+  text: string,
+  id = "text-1"
+) {
+  writer.write({ type: "start" });
+  writer.write({ type: "start-step" });
+  writer.write({ type: "text-start", id });
+  writer.write({ type: "text-delta", id, delta: text });
+  writer.write({ type: "text-end", id });
+  writer.write({ type: "finish-step" });
+  writer.write({ type: "finish" });
+}
+
 export class ChatAgent extends AIChatAgent<Env> {
   maxPersistedMessages = 100;
   chatRecovery = true;
@@ -197,11 +215,11 @@ export class ChatAgent extends AIChatAgent<Env> {
       return createUIMessageStreamResponse({
         stream: createUIMessageStream({
           execute: async ({ writer }) => {
-            writer.write({
-              type: "text-delta",
-              id: "greeting-text-1",
-              delta: HR_GREETING_RESPONSE
-            });
+            writeCompleteTextMessage(
+              writer,
+              HR_GREETING_RESPONSE,
+              "greeting-text-1"
+            );
           }
         })
       });
@@ -241,18 +259,14 @@ export class ChatAgent extends AIChatAgent<Env> {
                 }))
               ]);
 
-              writer.write({
-                type: "text-delta",
-                id: "fallback-text-1",
-                delta: reply
-              });
+              writeCompleteTextMessage(writer, reply, "fallback-text-1");
             } catch (fallbackErr) {
               console.error("Direct fallback also failed:", fallbackErr);
-              writer.write({
-                type: "text-delta",
-                id: "fallback-text-err",
-                delta: "I don't know, please contact HR."
-              });
+              writeCompleteTextMessage(
+                writer,
+                "I don't know, please contact HR.",
+                "fallback-text-err"
+              );
             }
           }
         },

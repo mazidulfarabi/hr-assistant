@@ -230,6 +230,11 @@ function ChatContent() {
               );
             }
 
+            // Do not render empty or unfulfilled assistant message placeholders
+            if (effectiveText.length === 0 && !isWaiting) {
+              return null;
+            }
+
             // Assistant Message Bubble
             return (
               <div
