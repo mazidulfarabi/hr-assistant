@@ -11,14 +11,56 @@ import {
   CheckCircleIcon
 } from "@phosphor-icons/react";
 
+const SESSION_STORAGE_KEY = "xyz_hr_assistant_session_id";
+
+function getOrCreateSessionId(): string {
+  if (typeof window === "undefined") {
+    return "default";
+  }
+
+  try {
+    const searchParams = new URLSearchParams(window.location.search);
+    const sessionFromUrl = searchParams.get("session");
+    if (sessionFromUrl && sessionFromUrl.trim().length > 0) {
+      return sessionFromUrl.trim();
+    }
+  } catch {
+    // Ignore URL parsing errors
+  }
+
+  try {
+    const stored = window.localStorage.getItem(SESSION_STORAGE_KEY);
+    if (stored && stored.trim().length > 0) {
+      return stored.trim();
+    }
+  } catch {
+    // Ignore localStorage access errors
+  }
+
+  const generatedId =
+    typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+      ? crypto.randomUUID()
+      : `session-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+
+  try {
+    window.localStorage.setItem(SESSION_STORAGE_KEY, generatedId);
+  } catch {
+    // Ignore localStorage write errors
+  }
+
+  return generatedId;
+}
+
 function ChatContent() {
+  const [sessionId] = useState<string>(getOrCreateSessionId);
   const [input, setInput] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Initialize Cloudflare Agent connection
+  // Initialize Cloudflare Agent connection with a unique session ID per device
   const agent = useAgent({
-    agent: "ChatAgent"
+    agent: "ChatAgent",
+    name: sessionId
   });
 
   // Connect stateful chat hooks with automatic persistence in Durable Objects SQLite

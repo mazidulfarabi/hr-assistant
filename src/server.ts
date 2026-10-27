@@ -19,6 +19,7 @@ Critical Order of Operations:
 Step 1: Check for Privacy (Leave Records): Does this ask for another employee's leave records, leave balances, reasons for absence, or attendance status? If yes, trigger Rule 3.
 
 Step 2: Check for Out-of-Scope Concepts & General Inquiries: Does the user's question ask about anything not explicitly defined in the leave policy (such as questions about crime, "who killed...", general knowledge, remote work, salary, hardware, or conditions like "half-day")? Note: You must use semantic understanding; for example, "worked on a holiday" is a valid concept covered under "Compensatory Off". If the core concept is genuinely absent, you must abort immediately and trigger Rule 2.
+Exception for Greetings: Polite conversational greetings and introductions (such as "Hi", "Hello", "Hey", "Good morning") are welcomed conversation starters and not out-of-scope queries; greet the user warmly as the XYZ Company HR Assistant and invite them to ask about XYZ Company's Leave Policy (no citation section is required for conversational greetings).
 
 Step 3: Answer & Cite: Only if the question passes Step 1 and Step 2 may you answer it using Rule 1.
 
@@ -42,6 +43,8 @@ Crucial: Even if the question mentions a valid leave type (like "Casual Leave"),
 
 Crucial: Even if the question mentions a person's name, if it is an out-of-scope or unrelated question (such as "who killed [X]"), you must trigger Rule 2, NOT Rule 3.
 
+Crucial: Conversational greetings (such as "Hi", "Hello", "Good morning") are not out-of-scope questions; welcome the employee politely and offer assistance with the leave policy instead of triggering this rule.
+
 Do not explain that the policy doesn't mention it. Do not attempt to synthesize an answer.
 
 Do not tailor your refusal to the user's prompt. Never acknowledge what the user asked for (e.g., do not say "I don't have information about [X]"). You must output the authorized phrase and nothing else.
@@ -56,6 +59,45 @@ If a user asks for personal leave records, leave balances, medical information, 
 Do not confirm or deny the employee's status. Do not tailor your refusal to the user's prompt.
 
 You must output EXACTLY this response and NOTHING ELSE: "Leave records are confidential. I cannot share information about other employees. Please contact the HR Department."`;
+
+export const HR_GREETING_RESPONSE =
+  "Hello! I am your XYZ Company HR Leave Assistant. How can I help you today with questions regarding XYZ Company's Leave Policy (HR-POL-004)?";
+
+const EXACT_GREETINGS = new Set([
+  "hi",
+  "hello",
+  "hey",
+  "hiya",
+  "howdy",
+  "hola",
+  "greetings",
+  "good morning",
+  "good afternoon",
+  "good evening",
+  "good day"
+]);
+
+const GREETING_PATTERN =
+  /^(hi|hello|hey|hiya|howdy|greetings|good\s+(morning|afternoon|evening|day))[\s,]+(there|hr|assistant|bot|team|all|xyz|xyz\s+hr)?$/i;
+
+/**
+ * Checks if a user message is a pure greeting / conversational pleasantry
+ * without a substantive policy or out-of-scope question.
+ */
+export function isPureGreeting(text: string): boolean {
+  if (!text) return false;
+  const cleaned = text
+    .trim()
+    .toLowerCase()
+    .replace(/^[^a-z0-9]+|[^a-z0-9]+$/gi, "")
+    .trim();
+
+  if (EXACT_GREETINGS.has(cleaned)) {
+    return true;
+  }
+
+  return GREETING_PATTERN.test(cleaned);
+}
 
 export const HR_SYSTEM_PROMPT = `${SYSTEM_INSTRUCTIONS}
 
@@ -146,6 +188,25 @@ export class ChatAgent extends AIChatAgent<Env> {
       })
       .filter((msg) => msg.content.length > 0);
 
+    const lastUserMessage = [...modelMessages]
+      .reverse()
+      .find((m) => m.role === "user");
+
+    // Fast and deterministic response for pure greetings (Hi / Hello / etc.)
+    if (lastUserMessage && isPureGreeting(lastUserMessage.content)) {
+      return createUIMessageStreamResponse({
+        stream: createUIMessageStream({
+          execute: async ({ writer }) => {
+            writer.write({
+              type: "text-delta",
+              id: "greeting-text-1",
+              delta: HR_GREETING_RESPONSE
+            });
+          }
+        })
+      });
+    }
+
     const workersai = createWorkersAI({ binding: this.env.AI });
     const primaryModel = LLAMA_CANDIDATE_MODELS[0];
     const sessionAffinity = this.sessionAffinity;
@@ -205,6 +266,9 @@ export class ChatAgent extends AIChatAgent<Env> {
    */
   @callable()
   async askQuestion(question: string): Promise<string> {
+    if (isPureGreeting(question)) {
+      return HR_GREETING_RESPONSE;
+    }
     return await runLlamaInference(this.env, [
       { role: "system", content: HR_SYSTEM_PROMPT },
       { role: "user", content: question }
@@ -230,6 +294,15 @@ export default {
             }),
             {
               status: 400,
+              headers: { "Content-Type": "application/json" }
+            }
+          );
+        }
+
+        if (isPureGreeting(message)) {
+          return new Response(
+            JSON.stringify({ response: HR_GREETING_RESPONSE }),
+            {
               headers: { "Content-Type": "application/json" }
             }
           );
